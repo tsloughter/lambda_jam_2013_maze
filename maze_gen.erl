@@ -7,6 +7,8 @@
 -define(EAST, 4).
 -define(WEST, 8).
 
+-define(DIRECTIONS, [1,2,4,8]).
+
 gen(X, Y) ->
     Maze = base_maze(X, Y),
     Positions = make_positions(X, Y, []),
@@ -20,7 +22,7 @@ carve(Maze, Positions) ->
     NewPositions = lists:delete({X, Y}, Positions),
     {H, [Row | T]} = lists:split(Y-1, Maze),
     {RH, [_C | RT]} = lists:split(X-1, Row),
-    carve(H ++ [RH ++ [?SOUTH] ++ RT] ++ T, NewPositions).
+    carve(H ++ [RH ++ [lists:nth(random:uniform(4), ?DIRECTIONS)] ++ RT] ++ T, NewPositions).
 
 base_maze(X, Y) ->
     Row = make_row(X, []),

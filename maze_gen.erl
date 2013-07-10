@@ -17,12 +17,50 @@ gen(X, Y) ->
 carve(Maze, []) ->
     Maze;
 carve(Maze, Positions) ->
-    io:format("Maze ~p~n", [Maze]),
     {X, Y} =  lists:nth(random:uniform(length(Positions)), Positions),
     NewPositions = lists:delete({X, Y}, Positions),
-    {H, [Row | T]} = lists:split(Y-1, Maze),
-    {RH, [_C | RT]} = lists:split(X-1, Row),
-    carve(H ++ [RH ++ [lists:nth(random:uniform(4), ?DIRECTIONS)] ++ RT] ++ T, NewPositions).
+    case uncarved_neighbor(X, Y, Maze, Positions) of
+        none ->
+            io:format("None~n", []),
+            carve(Maze, NewPositions);
+        {NX, NY} ->
+            {H, [Row | T]} = lists:split(Y-1, Maze),
+            {RH, [C | RT]} = lists:split(X-1, Row),
+
+            if
+                NX < X andalso NY == Y ->
+                    carve(H ++ [RH ++ [C + ?WEST] ++ RT] ++ T, Positions);
+                NX == X andalso NY < Y ->
+                    carve(H ++ [RH ++ [C + ?NORTH] ++ RT] ++ T, Positions);
+                NX == X andalso NY > Y ->
+                    carve(H ++ [RH ++ [C + ?SOUTH] ++ RT] ++ T, Positions);
+                NX > X andalso NY == Y ->
+                    carve(H ++ [RH ++ [C + ?EAST] ++ RT] ++ T, Positions)
+            end
+    end.
+
+uncarved_neighbor(X, Y, Maze, Positions) ->
+    Neighbors = [{X, Y-1}, {X-1, Y}, {X+1, Y}, {X, Y+1}],
+    find_uncarved_neighbor(Maze, Neighbors, Positions).
+
+find_uncarved_neighbor(_, [], _Positions) ->
+    none;
+find_uncarved_neighbor(Maze, Neighbors, Positions) ->
+    R = random:uniform(length(Neighbors)),
+    {X, Y} = N = lists:nth(R, Neighbors),
+    Cell = try
+               Row = lists:nth(Y, Maze),
+               lists:nth(X, Row)
+           catch
+               _:_ ->
+                   -1
+           end,
+    case {Cell, lists:member(N, Positions)} of
+        {0, true} ->
+            N;
+        {_, _} ->
+            find_uncarved_neighbor(Maze, lists:delete(N, Neighbors), Positions)
+    end.
 
 base_maze(X, Y) ->
     Row = make_row(X, []),
